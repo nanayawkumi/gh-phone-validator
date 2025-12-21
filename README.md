@@ -1,4 +1,4 @@
-# Ghana Phone Validator
+# Gh Phone Validator
 
 A Laravel validation rule and helper package for validating and normalizing Ghana phone numbers.
 
@@ -156,7 +156,7 @@ GhPhoneValidator::formatE164('invalid');        // Returns: null
 Format phone numbers for display in your user interface:
 
 ```blade
-{{ GhanaPhone::formatNational($user->phone) }}
+{{ GhPhoneValidator::formatNational($user->phone) }}
 ```
 
 #### SMS / Telco APIs
@@ -164,7 +164,7 @@ Format phone numbers for display in your user interface:
 Format phone numbers in E.164 format for SMS gateways and telco APIs:
 
 ```php
-$msisdn = GhanaPhone::formatE164($phone);
+$msisdn = GhPhoneValidator::formatE164($phone);
 ```
 
 ## Eloquent Cast
@@ -174,12 +174,12 @@ This package provides an Eloquent cast for Ghana phone numbers.
 ### Basic Usage
 
 ```php
-use SamuelKumi\GhanaPhone\Casts\GhanaPhoneCast;
+use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
 
 class User extends Model
 {
     protected $casts = [
-        'phone' => GhanaPhoneCast::class,
+        'phone' => GhPhoneCast::class,
     ];
 }
 ```
@@ -196,7 +196,7 @@ class User extends Model
 $user->phone->national();        // Returns: '024 123 4567'
 $user->phone->international();   // Returns: '+233 24 123 4567'
 $user->phone->e164();            // Returns: '+233241234567'
-$user->phone->network();          // Returns: ['name' => 'MTN', 'slug' => 'mtn']
+$user->phone->network();          // Returns: Network::MTN (enum)
 $user->phone->raw();              // Returns: '+233241234567'
 ```
 
@@ -221,16 +221,20 @@ You can control how phone numbers are stored in the database.
 ### Store as E.164 (default)
 
 ```php
+use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
+
 protected $casts = [
-    'phone' => GhanaPhoneCast::class,
+    'phone' => GhPhoneCast::class,
 ];
 ```
 
 ### Store as Raw Local Format
 
 ```php
+use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
+
 protected $casts = [
-    'phone' => GhanaPhoneCast::class . ':raw',
+    'phone' => GhPhoneCast::class . ':raw',
 ];
 ```
 
@@ -251,10 +255,12 @@ $user->phone = '024 123 4567';
 $user->save();  // Stored as '+233241234567'
 
 // Store as raw local format
+use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
+
 class User extends Model
 {
     protected $casts = [
-        'phone' => GhanaPhoneCast::class . ':raw',
+        'phone' => GhPhoneCast::class . ':raw',
     ];
 }
 
@@ -270,9 +276,10 @@ The package provides a strongly-typed `Network` enum for working with network pr
 ### Using the Network Enum
 
 ```php
-use SamuelKumi\GhanaPhone\Enums\Network;
+use Nanayawkumi\GhPhoneValidator\GhPhoneValidator;
+use Nanayawkumi\GhPhoneValidator\Enums\Network;
 
-$network = GhanaPhone::network('0241234567');
+$network = GhPhoneValidator::network('0241234567');
 
 if ($network === Network::MTN) {
     // Do something
@@ -287,6 +294,8 @@ $network->slug();  // mtn
 When using the Eloquent cast, the `network()` method returns a `Network` enum:
 
 ```php
+use Nanayawkumi\GhPhoneValidator\Enums\Network;
+
 $user->phone->network(); // Network enum (Network::MTN, Network::TELECEL, etc.)
 
 // Use it in conditionals
