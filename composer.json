@@ -1,0 +1,38 @@
+{
+    "name": "nanayawkumi/gh-phone-validator",
+    "description": "Laravel validation rule and helpers for Ghana phone numbers",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Samuel Kumi-Buabeng"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/validation": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0",
+        "pestphp/pest": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nanayawkumi\\GhPhoneValidator\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nanayawkumi\\GhPhoneValidator\\GhPhoneValidatorServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
