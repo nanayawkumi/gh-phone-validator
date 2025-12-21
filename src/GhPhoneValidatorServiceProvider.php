@@ -19,7 +19,7 @@ class GhPhoneValidatorServiceProvider extends ServiceProvider
     {
 
         Validator::extend('gh_phone', function ($attribute, $value) {
-            return GhPhoneValidator::normalize((string) $value) !== null;
+            return GhPhoneValidator::validate((string) $value);
         });
 
         Validator::replacer('gh_phone', function ($message, $attribute) {

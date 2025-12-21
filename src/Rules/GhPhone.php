@@ -10,8 +10,8 @@ class GhPhone implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!GhPhoneValidator::normalize((string) $value)) {
-            $fail('The :attribute must be a valid Ghana phone number.');
+        if (!GhPhoneValidator::validate((string) $value)) {
+            $fail('The :attribute must be a valid Ghana phone number.', $attribute ?? null);
         }
     }
 }

@@ -2,6 +2,8 @@
 
 return [
 
+    'strict' => false,
+
     'networks' => [
         'mtn' => [
             'name' => 'MTN',
@@ -15,14 +17,6 @@ return [
             'name' => 'AirtelTigo',
             'codes' => ['026', '056', '027', '057'],
         ],
-        // 'glo' => [
-        //     'name' => 'Globacom',
-        //     'codes' => ['023'],
-        // ],
-        // 'expresso' => [
-        //     'name' => 'Expresso',
-        //     'codes' => ['028'],
-        // ],
     ],
 
 ];
