@@ -14,7 +14,7 @@ class GhPhoneCast implements CastsAttributes
     /**
      * @param string $storeAs e164|raw
      */
-    public function __construct(string $storeAs = 'e164')
+    public function __construct(string $storeAs = 'raw')
     {
         $this->storeAs = $storeAs;
     }
@@ -28,7 +28,12 @@ class GhPhoneCast implements CastsAttributes
             return null;
         }
 
-        return new PhoneNumber($value);
+        // If stored as E.164 format, convert to raw
+        $raw = str_starts_with($value, '+233')
+            ? GhPhoneValidator::normalize($value)
+            : $value;
+
+        return new PhoneNumber($raw);
     }
 
     /**

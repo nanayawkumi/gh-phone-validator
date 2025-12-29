@@ -14,19 +14,49 @@ class TestUser extends Model
     ];
 }
 
-it('casts phone number to value object', function () {
+it('casts phone number to value object that works as string', function () {
     $user = new TestUser(['phone' => '+233241234567']);
 
-    expect($user->phone)
-        ->toBeInstanceOf(\Nanayawkumi\GhPhoneValidator\ValueObjects\PhoneNumber::class)
+    // When used as string, returns raw format
+    expect((string) $user->phone)
+        ->toBe('0241234567')
+        ->and($user->phone)
+        ->toBeInstanceOf(\Nanayawkumi\GhPhoneValidator\ValueObjects\PhoneNumber::class);
+});
+
+it('allows formatting via method calls', function () {
+    $user = new TestUser(['phone' => '+233241234567']);
+
+    expect($user->phone->e164())
+        ->toBe('+233241234567')
         ->and($user->phone->national())
+        ->toBe('024 123 4567')
+        ->and($user->phone->international())
+        ->toBe('+233 24 123 4567');
+});
+
+it('allows method call syntax via __invoke', function () {
+    $user = new TestUser(['phone' => '+233241234567']);
+
+    expect($user->phone()->e164())
+        ->toBe('+233241234567')
+        ->and($user->phone()->national())
         ->toBe('024 123 4567');
 });
 
-it('stores phone number in e164 format', function () {
+it('stores phone number in raw format by default', function () {
     $user = new TestUser();
     $user->phone = '024 123 4567';
 
     expect($user->getAttributes()['phone'])
-        ->toBe('+233241234567');
+        ->toBe('0241234567');
+});
+
+it('converts e164 format to raw when retrieving', function () {
+    // Simulate a value stored as E.164 (from old data or explicit :e164 cast)
+    $user = new TestUser();
+    $user->setRawAttributes(['phone' => '+233241234567']);
+
+    expect((string) $user->phone)
+        ->toBe('0241234567');
 });

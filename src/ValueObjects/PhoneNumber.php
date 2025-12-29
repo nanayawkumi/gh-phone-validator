@@ -50,4 +50,13 @@ final class PhoneNumber
     {
         return $this->raw;
     }
+
+    /**
+     * Allow the object to be called as a method.
+     * This enables syntax like: $user->phone()->e164()
+     */
+    public function __invoke(): self
+    {
+        return $this;
+    }
 }

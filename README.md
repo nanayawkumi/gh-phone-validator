@@ -156,7 +156,9 @@ GhPhoneValidator::formatE164('invalid');        // Returns: null
 Format phone numbers for display in your user interface:
 
 ```blade
-{{ GhPhoneValidator::formatNational($user->phone) }}
+{{ $user->phone }}                    {{-- Raw format: 0241234567 --}}
+{{ $user->phone->national() }}        {{-- National: 024 123 4567 --}}
+{{ $user->phone->international() }}   {{-- International: +233 24 123 4567 --}}
 ```
 
 #### SMS / Telco APIs
@@ -164,6 +166,10 @@ Format phone numbers for display in your user interface:
 Format phone numbers in E.164 format for SMS gateways and telco APIs:
 
 ```php
+// Using the cast
+$msisdn = $user->phone->e164();
+
+// Or using the validator directly
 $msisdn = GhPhoneValidator::formatE164($phone);
 ```
 
@@ -188,16 +194,21 @@ class User extends Model
 
 - **Accepts messy input when saving**: The cast automatically normalizes various phone number formats (with spaces, dashes, international format, etc.) when saving to the database.
 
-- **Stores numbers in E.164 format**: Phone numbers are stored in the database using the E.164 international format (e.g., `+233241234567`).
+- **Stores numbers in raw format by default**: Phone numbers are stored in the database using the raw local format (e.g., `0241234567`). You can optionally store in E.164 format using `:e164`.
 
-- **Returns a value object with formatting helpers**: When retrieving the phone number, you get a `PhoneNumber` value object with convenient formatting methods:
+- **Works as string and value object**: When retrieving the phone number, `$user->phone` works as a string (returns raw format) and also provides formatting methods:
 
 ```php
-$user->phone->national();        // Returns: '024 123 4567'
+// Direct string access (returns raw format)
+echo $user->phone;                // Output: '0241234567'
+$phone = $user->phone;            // String: '0241234567'
+
+// Formatting methods
+$user->phone->national();         // Returns: '024 123 4567'
 $user->phone->international();   // Returns: '+233 24 123 4567'
 $user->phone->e164();            // Returns: '+233241234567'
-$user->phone->network();          // Returns: Network::MTN (enum)
-$user->phone->raw();              // Returns: '+233241234567'
+$user->phone->network();         // Returns: Network::MTN (enum)
+$user->phone->raw();             // Returns: '0241234567'
 ```
 
 **Example:**
@@ -206,19 +217,25 @@ $user->phone->raw();              // Returns: '+233241234567'
 // Saving with messy input
 $user = new User();
 $user->phone = '024 123 4567';  // Accepts various formats
-$user->save();                   // Stored as '+233241234567'
+$user->save();                   // Stored as '0241234567' (raw format)
 
-// Retrieving and formatting
+// Retrieving and using
 $user = User::find(1);
-echo $user->phone->national();      // Output: '024 123 4567'
-echo $user->phone->international(); // Output: '+233 24 123 4567'
+
+// Use as string (automatically returns raw format)
+echo $user->phone;                    // Output: '0241234567'
+
+// Use formatting methods
+echo $user->phone->national();        // Output: '024 123 4567'
+echo $user->phone->international();  // Output: '+233 24 123 4567'
+echo $user->phone->e164();           // Output: '+233241234567'
 ```
 
 ## Cast Storage Customization
 
 You can control how phone numbers are stored in the database.
 
-### Store as E.164 (default)
+### Store as Raw Local Format (default)
 
 ```php
 use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
@@ -228,45 +245,54 @@ protected $casts = [
 ];
 ```
 
-### Store as Raw Local Format
+Phone numbers are stored in raw local format (e.g., `0241234567`) by default.
+
+### Store as E.164 Format
 
 ```php
 use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
 
 protected $casts = [
-    'phone' => GhPhoneCast::class . ':raw',
+    'phone' => GhPhoneCast::class . ':e164',
 ];
 ```
+
+Phone numbers are stored in E.164 international format (e.g., `+233241234567`).
 
 ### Notes
 
 - **All formats are normalized before storage**: Regardless of the input format (with spaces, dashes, international format, etc.), the phone number is normalized before being stored.
 
-- **Retrieval always returns a value object**: When retrieving from the database, you always get a `PhoneNumber` value object with formatting helpers, regardless of how it was stored.
+- **Retrieval returns a value object that works as string**: When retrieving from the database, you get a `PhoneNumber` value object that works as a string (returns raw format) and also provides formatting methods, regardless of how it was stored.
 
 - **Strict mode is respected**: The cast respects the strict mode configuration when validating phone numbers before storage.
 
 **Example:**
 
 ```php
-// Store as E.164 (default)
+// Store as raw (default)
 $user = new User();
 $user->phone = '024 123 4567';
-$user->save();  // Stored as '+233241234567'
+$user->save();  // Stored as '0241234567'
 
-// Store as raw local format
+// Store as E.164 format
 use Nanayawkumi\GhPhoneValidator\Casts\GhPhoneCast;
 
 class User extends Model
 {
     protected $casts = [
-        'phone' => GhPhoneCast::class . ':raw',
+        'phone' => GhPhoneCast::class . ':e164',
     ];
 }
 
 $user = new User();
-$user->phone = '+233241234567';
-$user->save();  // Stored as '0241234567'
+$user->phone = '024 123 4567';
+$user->save();  // Stored as '+233241234567'
+
+// Retrieval works the same way regardless of storage format
+$user = User::find(1);
+echo $user->phone;                // Output: '0241234567' (always raw when used as string)
+echo $user->phone->e164();        // Output: '+233241234567'
 ```
 
 ## Network Enum
