@@ -10,17 +10,26 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/validation": "^10.0|^11.0|^12.0",
-        "illuminate/support": "^10.0|^11.0|^12.0"
+        "illuminate/validation": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0",
-        "pestphp/pest": "^2.0"
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^2.0|^3.0|^4.0"
     },
     "autoload": {
         "psr-4": {
             "Nanayawkumi\\GhPhoneValidator\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nanayawkumi\\GhPhoneValidator\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "test:coverage": "pest --coverage"
     },
     "extra": {
         "laravel": {

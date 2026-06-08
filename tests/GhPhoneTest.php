@@ -13,7 +13,7 @@ it('normalizes ghana phone numbers', function () {
 it('detects network correctly', function () {
     $network = GhPhoneValidator::network('0241234567');
 
-    expect($network['slug'])->toBe('mtn');
+    expect($network?->slug())->toBe('mtn');
 });
 
 it('formats phone numbers correctly', function () {

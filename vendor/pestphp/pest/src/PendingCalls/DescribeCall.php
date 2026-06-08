@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pest\PendingCalls;
 
 use Closure;
-use Pest\Support\Backtrace;
+use Pest\Support\Description;
 use Pest\TestSuite;
 
 /**
@@ -15,8 +15,15 @@ final class DescribeCall
 {
     /**
      * The current describe call.
+     *
+     * @var array<int, Description>
      */
-    private static ?string $describing = null;
+    private static array $describing = [];
+
+    /**
+     * The describe "before each" call.
+     */
+    private ?BeforeEachCall $currentBeforeEachCall = null;
 
     /**
      * Creates a new Pending Call.
@@ -24,7 +31,7 @@ final class DescribeCall
     public function __construct(
         public readonly TestSuite $testSuite,
         public readonly string $filename,
-        public readonly string $description,
+        public readonly Description $description,
         public readonly Closure $tests
     ) {
         //
@@ -32,8 +39,10 @@ final class DescribeCall
 
     /**
      * What is the current describing.
+     *
+     * @return array<int, Description>
      */
-    public static function describing(): ?string
+    public static function describing(): array
     {
         return self::$describing;
     }
@@ -43,12 +52,18 @@ final class DescribeCall
      */
     public function __destruct()
     {
-        self::$describing = $this->description;
+        // Ensure BeforeEachCall destructs before creating tests
+        // by moving to local scope and clearing the reference
+        $beforeEach = $this->currentBeforeEachCall;
+        $this->currentBeforeEachCall = null;
+        unset($beforeEach);  // Trigger destructor immediately
+
+        self::$describing[] = $this->description;
 
         try {
             ($this->tests)();
         } finally {
-            self::$describing = null;
+            array_pop(self::$describing);
         }
     }
 
@@ -57,14 +72,19 @@ final class DescribeCall
      *
      * @param  array<int, mixed>  $arguments
      */
-    public function __call(string $name, array $arguments): BeforeEachCall
+    public function __call(string $name, array $arguments): self
     {
-        $filename = Backtrace::file();
+        if (! $this->currentBeforeEachCall instanceof BeforeEachCall) {
+            $this->currentBeforeEachCall = new BeforeEachCall(TestSuite::getInstance(), $this->filename);
 
-        $beforeEachCall = new BeforeEachCall(TestSuite::getInstance(), $filename);
+            $this->currentBeforeEachCall->describing = array_merge(
+                DescribeCall::describing(),
+                [$this->description]
+            );
+        }
 
-        $beforeEachCall->describing = $this->description;
+        $this->currentBeforeEachCall->{$name}(...$arguments);
 
-        return $beforeEachCall->{$name}(...$arguments); // @phpstan-ignore-line
+        return $this;
     }
 }

@@ -14,7 +14,7 @@ use function Pest\version;
 /**
  * @internal
  */
-final class Help implements HandlesArguments
+final readonly class Help implements HandlesArguments
 {
     use Concerns\HandleArguments;
 
@@ -22,7 +22,7 @@ final class Help implements HandlesArguments
      * Creates a new Plugin instance.
      */
     public function __construct(
-        private readonly OutputInterface $output
+        private OutputInterface $output
     ) {
         // ..
     }
@@ -99,12 +99,20 @@ final class Help implements HandlesArguments
     {
         $helpReflection = new PHPUnitHelp;
 
+        // @phpstan-ignore-next-line
         $content = (fn (): array => $this->elements())->call($helpReflection);
 
         $content['Configuration'] = [...[[
             'arg' => '--init',
             'desc' => 'Initialise a standard Pest configuration',
         ]], ...$content['Configuration']];
+
+        $content['AI'] = [
+            [
+                'arg' => '--ai',
+                'desc' => 'Run a code snippet as a fully scaffolded test for AI verification',
+            ],
+        ];
 
         $content['Execution'] = [...[
             [
@@ -115,6 +123,10 @@ final class Help implements HandlesArguments
                 'arg' => '--update-snapshots',
                 'desc' => 'Update snapshots for tests using the "toMatchSnapshot" expectation',
             ],
+            [
+                'arg' => '--update-shards',
+                'desc' => 'Update shards.json with test timing data for time-balanced sharding',
+            ],
         ], ...$content['Execution']];
 
         $content['Selection'] = [[
@@ -124,8 +136,29 @@ final class Help implements HandlesArguments
             'arg' => '--todos',
             'desc' => 'Output to standard output the list of todos',
         ], [
+            'arg' => '--notes',
+            'desc' => 'Output to standard output tests with notes',
+        ], [
+        ], [
+            'arg' => '--issue',
+            'desc' => 'Output to standard output tests with the given issue number',
+        ], [
+        ], [
+            'arg' => '--pr',
+            'desc' => 'Output to standard output tests with the given pull request number',
+        ], [
+        ], [
+            'arg' => '--pull-request',
+            'desc' => 'Output to standard output tests with the given pull request number (alias for --pr)',
+        ], [
             'arg' => '--retry',
             'desc' => 'Run non-passing tests first and stop execution upon first error or failure',
+        ], [
+            'arg' => '--dirty',
+            'desc' => 'Only run tests that have uncommitted changes according to Git',
+        ], [
+            'arg' => '--flaky',
+            'desc' => 'Output to standard output tests marked as flaky',
         ], ...$content['Selection']];
 
         $content['Reporting'] = [...$content['Reporting'], ...[
@@ -141,7 +174,66 @@ final class Help implements HandlesArguments
         ], [
             'arg' => '--coverage --min',
             'desc' => 'Set the minimum required coverage percentage, and fail if not met',
+        ], [
+            'arg' => '--coverage --exactly',
+            'desc' => 'Set the exact required coverage percentage, and fail if not met',
+        ], [
+            'arg' => '--coverage --only-covered',
+            'desc' => 'Hide files with 0% coverage from the code coverage report',
         ], ...$content['Code Coverage']];
+
+        $content['Mutation Testing'] = [[
+            'arg' => '--mutate ',
+            'desc' => 'Runs mutation testing, to understand the quality of your tests',
+        ], [
+            'arg' => '--mutate --parallel',
+            'desc' => 'Runs mutation testing in parallel',
+        ], [
+            'arg' => '--mutate --min',
+            'desc' => 'Set the minimum required mutation score, and fail if not met',
+        ], [
+            'arg' => '--mutate --id',
+            'desc' => 'Run only the mutation with the given ID. But E.g. --id=ecb35ab30ffd3491. Note, you need to provide the same options as the original run',
+        ], [
+            'arg' => '--mutate --covered-only',
+            'desc' => 'Only generate mutations for classes that are covered by tests',
+        ], [
+            'arg' => '--mutate --bail',
+            'desc' => 'Stop mutation testing execution upon first untested or uncovered mutation',
+        ], [
+            'arg' => '--mutate --class',
+            'desc' => 'Generate mutations for the given class(es). E.g. --class=App\\\\Models',
+        ], [
+            'arg' => '--mutate --ignore',
+            'desc' => 'Ignore the given class(es) when generating mutations. E.g. --ignore=App\\\\Http\\\\Requests',
+        ], [
+            'arg' => '--mutate --clear-cache',
+            'desc' => 'Clear the mutation cache',
+        ], [
+            'arg' => '--mutate --no-cache',
+            'desc' => 'Clear the mutation cache',
+        ], [
+            'arg' => '--mutate --ignore-min-score-on-zero-mutations',
+            'desc' => 'Ignore the minimum score requirement when there are no mutations',
+        ], [
+            'arg' => '--mutate --covered-only',
+            'desc' => 'Only generate mutations for classes that are covered by tests',
+        ], [
+            'arg' => '--mutate --everything',
+            'desc' => 'Generate mutations for all classes, even if they are not covered by tests',
+        ], [
+            'arg' => '--mutate --profile',
+            'desc' => 'Output to standard output the top ten slowest mutations',
+        ], [
+            'arg' => '--mutate --retry',
+            'desc' => 'Run untested or uncovered mutations first and stop execution upon first error or failure',
+        ], [
+            'arg' => '--mutate --stop-on-uncovered',
+            'desc' => 'Stop mutation testing execution upon first untested mutation',
+        ], [
+            'arg' => '--mutate --stop-on-untested',
+            'desc' => 'Stop mutation testing execution upon first untested mutation',
+        ]];
 
         $content['Profiling'] = [
             [

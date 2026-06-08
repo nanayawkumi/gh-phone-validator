@@ -6,6 +6,7 @@ use BackedEnum;
 use Closure;
 use Composer\InstalledVersions;
 use Composer\Semver\VersionParser;
+use Illuminate\Contracts\Foundation\Application as ApplicationContract;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use OutOfBoundsException;
@@ -53,23 +54,40 @@ if (! \function_exists('Orchestra\Sidekick\enum_value')) {
     }
 }
 
+if (! \function_exists('Orchestra\Sidekick\after_resolving')) {
+    /**
+     * Register after resolving callback.
+     *
+     * @api
+     *
+     * @template TLaravel of \Illuminate\Contracts\Foundation\Application
+     *
+     * @param  TLaravel  $app
+     * @param  class-string|string  $name
+     * @param  (\Closure(object, TLaravel):(mixed))|null  $callback
+     */
+    function after_resolving(ApplicationContract $app, string $name, ?Closure $callback = null): void
+    {
+        $app->afterResolving($name, $callback);
+
+        if ($app->resolved($name)) {
+            value($callback, $app->make($name), $app);
+        }
+    }
+}
+
 if (! \function_exists('Orchestra\Sidekick\join_paths')) {
+
     /**
      * Join the given paths together.
      *
      * @api
+     *
+     * @deprecated
      */
     function join_paths(?string $basePath, string ...$paths): string
     {
-        foreach ($paths as $index => $path) {
-            if (empty($path) && $path !== '0') {
-                unset($paths[$index]);
-            } else {
-                $paths[$index] = DIRECTORY_SEPARATOR.ltrim($path, DIRECTORY_SEPARATOR);
-            }
-        }
-
-        return $basePath.implode('', $paths);
+        return Filesystem\join_paths($basePath, ...$paths);
     }
 }
 
@@ -125,16 +143,12 @@ if (! \function_exists('Orchestra\Sidekick\is_symlink')) {
      * Determine if the path is a symlink for both Unix and Windows environments.
      *
      * @api
+     *
+     * @deprecated
      */
     function is_symlink(string $path): bool
     {
-        if (windows_os() && is_dir($path) && readlink($path) !== $path) {
-            return true;
-        } elseif (is_link($path)) {
-            return true;
-        }
-
-        return false;
+        return Filesystem\is_symlink($path);
     }
 }
 
@@ -171,6 +185,32 @@ if (! \function_exists('Orchestra\Sidekick\transform_relative_path')) {
     }
 }
 
+if (! \function_exists('Orchestra\Sidekick\package_path')) {
+    /**
+     * Get the package path.
+     *
+     * @api
+     *
+     * @no-named-arguments
+     *
+     * @param  array<int, string|null>|string  ...$path
+     */
+    function package_path(array|string $path = ''): string
+    {
+        $packagePath = once(function () {
+            $workingPath = realpath(match (true) {
+                \defined('TESTBENCH_WORKING_PATH') => TESTBENCH_WORKING_PATH,
+                Env::has('TESTBENCH_WORKING_PATH') => Env::get('TESTBENCH_WORKING_PATH'),
+                default => InstalledVersions::getRootPackage()['install_path'],
+            });
+
+            return $workingPath !== false ? $workingPath : getcwd();
+        });
+
+        return join_paths($packagePath(), ...Arr::wrap(\func_num_args() > 1 ? \func_get_args() : $path));
+    }
+}
+
 if (! \function_exists('Orchestra\Sidekick\working_path')) {
     /**
      * Get the working path.
@@ -183,8 +223,8 @@ if (! \function_exists('Orchestra\Sidekick\working_path')) {
      */
     function working_path(array|string $path = ''): string
     {
-        return is_testbench_cli() && \function_exists('Orchestra\Testbench\package_path')
-            ? \Orchestra\Testbench\package_path($path)
+        return is_testbench_cli()
+            ? package_path($path)
             : base_path(join_paths(...Arr::wrap(\func_num_args() > 1 ? \func_get_args() : $path)));
     }
 }
@@ -234,7 +274,7 @@ if (! \function_exists('Orchestra\Sidekick\phpunit_normalize_version')) {
         $version = transform(
             Version::id(),
             fn (string $version) => match (true) {
-                str_starts_with($version, '12.4-') => '12.4.0',
+                str_starts_with($version, '13.0-') => '13.0.0',
                 default => $version,
             }
         );
@@ -251,9 +291,8 @@ if (! \function_exists('Orchestra\Sidekick\laravel_version_compare')) {
      *
      * @template TOperator of string|null
      *
-     * @phpstan-param  TOperator  $operator
-     *
-     * @phpstan-return (TOperator is null ? int : bool)
+     * @param  TOperator  $operator
+     * @return (TOperator is null ? int : bool)
      *
      * @throws \RuntimeException
      *
@@ -322,9 +361,8 @@ if (! \function_exists('Orchestra\Sidekick\phpunit_version_compare')) {
      *
      * @template TOperator of string|null
      *
-     * @phpstan-param  TOperator  $operator
-     *
-     * @phpstan-return (TOperator is null ? int : bool)
+     * @param  TOperator  $operator
+     * @return (TOperator is null ? int : bool)
      *
      * @throws \OutOfBoundsException
      * @throws \RuntimeException

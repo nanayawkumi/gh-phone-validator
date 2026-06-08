@@ -14,8 +14,8 @@ The package will automatically register its service provider if you're using Lar
 
 ## Requirements
 
-- PHP ^8.2
-- Laravel ^10.0|^11.0|^12.0
+- PHP ^8.2 (Laravel 13 requires PHP ^8.3)
+- Laravel ^10.0|^11.0|^12.0|^13.0
 
 ## Usage
 

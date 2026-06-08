@@ -21,7 +21,7 @@ trait HandleArguments
                 return true;
             }
 
-            if (str_starts_with($arg, "$argument=")) {
+            if (str_starts_with((string) $arg, "$argument=")) { // @phpstan-ignore-line
                 return true;
             }
         }
@@ -55,5 +55,32 @@ trait HandleArguments
         unset($arguments[$argument]);
 
         return array_values(array_flip($arguments));
+    }
+
+    /**
+     * Pops the given argument and its value from the arguments, returning the value.
+     *
+     * @param  array<int, string>  $arguments
+     */
+    public function popArgumentValue(string $argument, array &$arguments): ?string
+    {
+        foreach ($arguments as $key => $value) {
+            if (str_contains($value, "$argument=")) {
+                unset($arguments[$key]);
+                $arguments = array_values($arguments);
+
+                return substr($value, strlen($argument) + 1);
+            }
+
+            if ($value === $argument && isset($arguments[$key + 1])) {
+                $result = $arguments[$key + 1];
+                unset($arguments[$key], $arguments[$key + 1]);
+                $arguments = array_values($arguments);
+
+                return $result;
+            }
+        }
+
+        return null;
     }
 }

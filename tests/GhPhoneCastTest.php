@@ -38,9 +38,9 @@ it('allows formatting via method calls', function () {
 it('allows method call syntax via __invoke', function () {
     $user = new TestUser(['phone' => '+233241234567']);
 
-    expect($user->phone()->e164())
+    expect(($user->phone)()->e164())
         ->toBe('+233241234567')
-        ->and($user->phone()->national())
+        ->and(($user->phone)()->national())
         ->toBe('024 123 4567');
 });
 

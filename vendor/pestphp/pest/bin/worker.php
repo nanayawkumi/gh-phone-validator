@@ -6,6 +6,7 @@ use ParaTest\WrapperRunner\ApplicationForWrapperWorker;
 use ParaTest\WrapperRunner\WrapperWorker;
 use Pest\Kernel;
 use Pest\Plugins\Actions\CallsHandleArguments;
+use Pest\Support\Container;
 use Pest\TestSuite;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -32,10 +33,13 @@ $bootPest = (static function (): void {
         'status-file:',
         'progress-file:',
         'unexpected-output-file:',
-        'testresult-file:',
+        'test-result-file:',
+        'result-cache-file:',
         'teamcity-file:',
         'testdox-file:',
         'testdox-color',
+        'testdox-columns:',
+        'testdox-summary',
         'phpunit-argv:',
     ]);
 
@@ -55,13 +59,23 @@ $bootPest = (static function (): void {
         }
     }
 
+    $container = Container::getInstance();
+    $rootPath = dirname(PHPUNIT_COMPOSER_INSTALL, 2);
+
+    foreach (Kernel::RESTARTERS as $restarterClass) {
+        $restarter = $container->get($restarterClass);
+
+        $restarter->maybeRestart($rootPath, $_SERVER['argv']);
+    }
+
     assert(isset($getopt['status-file']) && is_string($getopt['status-file']));
     $statusFile = fopen($getopt['status-file'], 'wb');
     assert(is_resource($statusFile));
 
     assert(isset($getopt['progress-file']) && is_string($getopt['progress-file']));
     assert(isset($getopt['unexpected-output-file']) && is_string($getopt['unexpected-output-file']));
-    assert(isset($getopt['testresult-file']) && is_string($getopt['testresult-file']));
+    assert(isset($getopt['test-result-file']) && is_string($getopt['test-result-file']));
+    assert(! isset($getopt['result-cache-file']) || is_string($getopt['result-cache-file']));
     assert(! isset($getopt['teamcity-file']) || is_string($getopt['teamcity-file']));
     assert(! isset($getopt['testdox-file']) || is_string($getopt['testdox-file']));
 
@@ -77,11 +91,12 @@ $bootPest = (static function (): void {
         $phpunitArgv,
         $getopt['progress-file'],
         $getopt['unexpected-output-file'],
-        $getopt['testresult-file'],
+        $getopt['test-result-file'],
+        $getopt['result-cache-file'] ?? null,
         $getopt['teamcity-file'] ?? null,
         $getopt['testdox-file'] ?? null,
         isset($getopt['testdox-color']),
-        $getopt['testdox-columns'] ?? null,
+        (int) ($getopt['testdox-columns'] ?? null),
     );
 
     while (true) {
